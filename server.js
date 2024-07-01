@@ -11,7 +11,12 @@ const app = express();
 app.use(express.json()); // to parse the incoming request with json payload (from req.body)
 app.use(express.urlencoded({ extended: true }));
 app.use(
-  expressSession({ secret: "secret", resave: false, saveUninitialized: false ,cookie: { secure: false }})
+  expressSession({
+    secret: "secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false },
+  })
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -47,11 +52,22 @@ app.get("/profile", isAuthenticated, (req, res) => {
   res.send(req.user);
 });
 
-app.get('/logout', (req, res) => {
-    req.logout();
-    res.redirect('/');
+app.get("/logout", (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        console.error(err);
+        return next(err); // Handle error appropriately
+      }
+      req.session.destroy((err) => {
+        if (err) {
+          console.error(err);
+          return next(err); // Handle error appropriately
+        }
+        res.clearCookie("connect.sid");
+        res.redirect("/"); // Redirect after successful logout
+      });
+    });
   });
-  
 app.listen(4000, async (req, res) => {
   await connectTomongoDB();
   // await User.create({username:"shiva",password:"asyudc"});
